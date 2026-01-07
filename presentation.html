@@ -1,0 +1,713 @@
+<!DOCTYPE html>
+<html lang="tr">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Landslide Detection - IB CSP Project</title>
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+
+        body {
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            overflow: hidden;
+        }
+
+        .presentation-container {
+            width: 100vw;
+            height: 100vh;
+            position: relative;
+        }
+
+        .slide {
+            width: 100%;
+            height: 100%;
+            display: none;
+            padding: 60px;
+            position: absolute;
+            top: 0;
+            left: 0;
+            background: white;
+            box-shadow: 0 10px 40px rgba(0,0,0,0.3);
+        }
+
+        .slide.active {
+            display: flex;
+            flex-direction: column;
+            justify-content: center;
+            align-items: center;
+            animation: slideIn 0.5s ease;
+        }
+
+        @keyframes slideIn {
+            from {
+                opacity: 0;
+                transform: translateX(50px);
+            }
+            to {
+                opacity: 1;
+                transform: translateX(0);
+            }
+        }
+
+        .slide h1 {
+            font-size: 3.5em;
+            color: #2c3e50;
+            margin-bottom: 30px;
+            text-align: center;
+        }
+
+        .slide h2 {
+            font-size: 2.5em;
+            color: #34495e;
+            margin-bottom: 40px;
+            text-align: center;
+        }
+
+        .slide h3 {
+            font-size: 2em;
+            color: #7f8c8d;
+            margin-bottom: 30px;
+        }
+
+        .slide p, .slide li {
+            font-size: 1.4em;
+            color: #555;
+            line-height: 1.8;
+            margin: 15px 0;
+        }
+
+        .slide ul {
+            list-style: none;
+            padding-left: 0;
+        }
+
+        .slide li:before {
+            content: "▸ ";
+            color: #667eea;
+            font-weight: bold;
+            margin-right: 10px;
+        }
+
+        .two-column {
+            display: grid;
+            grid-template-columns: 1fr 1fr;
+            gap: 40px;
+            width: 100%;
+            max-width: 1400px;
+        }
+
+        .three-column {
+            display: grid;
+            grid-template-columns: repeat(3, 1fr);
+            gap: 30px;
+            width: 100%;
+            max-width: 1600px;
+        }
+
+        .card {
+            background: #f8f9fa;
+            padding: 30px;
+            border-radius: 15px;
+            box-shadow: 0 5px 15px rgba(0,0,0,0.1);
+            text-align: center;
+        }
+
+        .card h3 {
+            color: #667eea;
+            margin-bottom: 20px;
+        }
+
+        .icon {
+            font-size: 4em;
+            margin-bottom: 20px;
+        }
+
+        .diagram {
+            background: #f0f0f0;
+            padding: 40px;
+            border-radius: 15px;
+            text-align: center;
+            font-size: 1.2em;
+            color: #666;
+        }
+
+        .architecture-box {
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            color: white;
+            padding: 25px;
+            border-radius: 10px;
+            margin: 15px 0;
+            text-align: center;
+            font-size: 1.3em;
+            font-weight: bold;
+        }
+
+        .arrow {
+            font-size: 2em;
+            color: #667eea;
+            margin: 20px 0;
+        }
+
+        .metric-box {
+            background: linear-gradient(135deg, #f093fb 0%, #f5576c 100%);
+            color: white;
+            padding: 30px;
+            border-radius: 15px;
+            text-align: center;
+            margin: 15px;
+        }
+
+        .metric-value {
+            font-size: 3em;
+            font-weight: bold;
+            margin: 10px 0;
+        }
+
+        .metric-label {
+            font-size: 1.2em;
+            opacity: 0.9;
+        }
+
+        .code-snippet {
+            background: #2d2d2d;
+            color: #f8f8f2;
+            padding: 25px;
+            border-radius: 10px;
+            font-family: 'Courier New', monospace;
+            font-size: 1.1em;
+            overflow-x: auto;
+            margin: 20px 0;
+        }
+
+        .navigation {
+            position: fixed;
+            bottom: 30px;
+            right: 30px;
+            z-index: 1000;
+        }
+
+        .nav-btn {
+            background: #667eea;
+            color: white;
+            border: none;
+            padding: 15px 25px;
+            margin: 0 10px;
+            border-radius: 50px;
+            font-size: 1.1em;
+            cursor: pointer;
+            box-shadow: 0 5px 15px rgba(0,0,0,0.3);
+            transition: all 0.3s;
+        }
+
+        .nav-btn:hover {
+            background: #764ba2;
+            transform: translateY(-2px);
+        }
+
+        .slide-counter {
+            position: fixed;
+            bottom: 30px;
+            left: 30px;
+            background: rgba(0,0,0,0.7);
+            color: white;
+            padding: 10px 20px;
+            border-radius: 20px;
+            font-size: 1.1em;
+        }
+
+        .highlight {
+            background: linear-gradient(120deg, #84fab0 0%, #8fd3f4 100%);
+            padding: 3px 8px;
+            border-radius: 5px;
+            font-weight: bold;
+        }
+
+        .image-placeholder {
+            width: 100%;
+            height: 300px;
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            border-radius: 15px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            color: white;
+            font-size: 1.5em;
+            margin: 20px 0;
+        }
+
+        .flow-diagram {
+            display: flex;
+            justify-content: space-around;
+            align-items: center;
+            width: 100%;
+            max-width: 1200px;
+            margin: 40px 0;
+        }
+
+        .flow-step {
+            background: white;
+            border: 3px solid #667eea;
+            padding: 20px;
+            border-radius: 15px;
+            text-align: center;
+            min-width: 150px;
+        }
+
+        .flow-arrow {
+            font-size: 2.5em;
+            color: #667eea;
+        }
+    </style>
+</head>
+<body>
+    <div class="presentation-container">
+        
+        <!-- Slide 1: Title -->
+        <div class="slide active">
+            <h1>Landslide Detection System</h1>
+            <h2>Using Deep Learning & U-Net Architecture</h2>
+            <div style="margin-top: 60px; font-size: 1.5em; color: #7f8c8d;">
+                IB Computer Science Project
+            </div>
+        </div>
+
+        <!-- Slide 2: Problem Statement -->
+        <div class="slide">
+            <h2>Problem Statement</h2>
+            <div class="two-column" style="margin-top: 40px;">
+                <div class="card">
+                    <h3>Challenge</h3>
+                    <p>Detecting landslides from satellite/aerial imagery is critical for disaster management and risk assessment</p>
+                </div>
+                <div class="card">
+                    <h3>Solution</h3>
+                    <p>Automated landslide detection using deep learning to analyze images and generate probability maps</p>
+                </div>
+            </div>
+        </div>
+
+        <!-- Slide 3: Dataset -->
+        <div class="slide">
+            <h2>Dataset Overview</h2>
+            <div class="three-column" style="margin-top: 40px;">
+                <div class="metric-box">
+                    <div class="metric-value">1,385</div>
+                    <div class="metric-label">Training Images</div>
+                </div>
+                <div class="metric-box">
+                    <div class="metric-value">396</div>
+                    <div class="metric-label">Validation Images</div>
+                </div>
+                <div class="metric-box">
+                    <div class="metric-value">199</div>
+                    <div class="metric-label">Test Images</div>
+                </div>
+            </div>
+            <div class="two-column" style="margin-top: 50px;">
+                <div class="image-placeholder">
+                    Input Image<br>(RGB Satellite Image)
+                </div>
+                <div class="image-placeholder">
+                    Ground Truth Mask<br>(Binary Segmentation)
+                </div>
+            </div>
+        </div>
+
+        <!-- Slide 4: U-Net Architecture -->
+        <div class="slide">
+            <h2>U-Net Architecture</h2>
+            <div style="margin-top: 40px; width: 100%; max-width: 1200px;">
+                <div class="flow-diagram">
+                    <div class="flow-step">
+                        <h3>Encoder</h3>
+                        <p>Feature Extraction</p>
+                        <div style="font-size: 0.9em; margin-top: 10px;">64→128→256→512</div>
+                    </div>
+                    <div class="flow-arrow">→</div>
+                    <div class="flow-step">
+                        <h3>Bottleneck</h3>
+                        <p>1024 Features</p>
+                    </div>
+                    <div class="flow-arrow">→</div>
+                    <div class="flow-step">
+                        <h3>Decoder</h3>
+                        <p>Upsampling</p>
+                        <div style="font-size: 0.9em; margin-top: 10px;">512→256→128→64</div>
+                    </div>
+                    <div class="flow-arrow">→</div>
+                    <div class="flow-step">
+                        <h3>Output</h3>
+                        <p>Probability Map</p>
+                        <div style="font-size: 0.9em; margin-top: 10px;">0-1 Range</div>
+                    </div>
+                </div>
+                <div style="text-align: center; margin-top: 40px; font-size: 1.3em; color: #667eea;">
+                    Skip Connections preserve spatial information
+                </div>
+            </div>
+        </div>
+
+        <!-- Slide 5: Model Components -->
+        <div class="slide">
+            <h2>Model Components</h2>
+            <div class="three-column" style="margin-top: 40px;">
+                <div class="card">
+                    <h3>DoubleConv Block</h3>
+                    <p>3x3 Conv → BatchNorm → ReLU<br>(x2 per block)</p>
+                </div>
+                <div class="card">
+                    <h3>MaxPooling</h3>
+                    <p>2x2 kernel, stride 2<br>Downsampling</p>
+                </div>
+                <div class="card">
+                    <h3>Transpose Conv</h3>
+                    <p>2x2 kernel, stride 2<br>Upsampling</p>
+                </div>
+            </div>
+            <div style="margin-top: 50px; text-align: center;">
+                <div class="code-snippet" style="max-width: 800px; margin: 0 auto;">
+Input: (3, 256, 256) RGB Image<br>
+↓<br>
+Encoder: Feature Extraction<br>
+↓<br>
+Bottleneck: High-level Features<br>
+↓<br>
+Decoder: Probability Reconstruction<br>
+↓<br>
+Output: (1, 256, 256) Probability Map
+                </div>
+            </div>
+        </div>
+
+        <!-- Slide 6: Loss Function -->
+        <div class="slide">
+            <h2>Loss Function</h2>
+            <div class="two-column" style="margin-top: 40px;">
+                <div class="card">
+                    <h3>Dice Loss</h3>
+                    <p style="font-size: 1.1em; margin-top: 20px;">
+                        Measures overlap between<br>
+                        predicted and ground truth
+                    </p>
+                    <div class="code-snippet" style="margin-top: 20px; font-size: 0.9em;">
+Dice = 2×Intersection / (Pred + Truth)
+                    </div>
+                </div>
+                <div class="card">
+                    <h3>Binary Cross Entropy</h3>
+                    <p style="font-size: 1.1em; margin-top: 20px;">
+                        Pixel-wise classification<br>
+                        loss function
+                    </p>
+                    <div class="code-snippet" style="margin-top: 20px; font-size: 0.9em;">
+BCE = -[y×log(ŷ) + (1-y)×log(1-ŷ)]
+                    </div>
+                </div>
+            </div>
+            <div style="margin-top: 50px; text-align: center;">
+                <div class="architecture-box" style="max-width: 600px; margin: 0 auto;">
+                    Combined Loss = 0.5 × Dice Loss + 0.5 × BCE Loss
+                </div>
+            </div>
+        </div>
+
+        <!-- Slide 7: Training Process -->
+        <div class="slide">
+            <h2>Training Process</h2>
+            <div style="margin-top: 40px; width: 100%; max-width: 1200px;">
+                <div class="flow-diagram">
+                    <div class="flow-step">
+                        <h3>1. Data Load</h3>
+                        <p>Images + Masks</p>
+                    </div>
+                    <div class="flow-arrow">→</div>
+                    <div class="flow-step">
+                        <h3>2. Forward Pass</h3>
+                        <p>Model Prediction</p>
+                    </div>
+                    <div class="flow-arrow">→</div>
+                    <div class="flow-step">
+                        <h3>3. Calculate Loss</h3>
+                        <p>Dice + BCE</p>
+                    </div>
+                    <div class="flow-arrow">→</div>
+                    <div class="flow-step">
+                        <h3>4. Backward Pass</h3>
+                        <p>Update Weights</p>
+                    </div>
+                </div>
+            </div>
+            <div class="three-column" style="margin-top: 50px;">
+                <div class="metric-box">
+                    <div class="metric-value">50</div>
+                    <div class="metric-label">Epochs</div>
+                </div>
+                <div class="metric-box">
+                    <div class="metric-value">16</div>
+                    <div class="metric-label">Batch Size</div>
+                </div>
+                <div class="metric-box">
+                    <div class="metric-value">0.001</div>
+                    <div class="metric-label">Learning Rate</div>
+                </div>
+            </div>
+        </div>
+
+        <!-- Slide 8: Data Augmentation -->
+        <div class="slide">
+            <h2>Data Augmentation</h2>
+            <div class="three-column" style="margin-top: 40px;">
+                <div class="card">
+                    <h3>Horizontal Flip</h3>
+                    <p>50% probability</p>
+                </div>
+                <div class="card">
+                    <h3>Vertical Flip</h3>
+                    <p>50% probability</p>
+                </div>
+                <div class="card">
+                    <h3>Purpose</h3>
+                    <p>Prevent overfitting<br>Increase dataset diversity</p>
+                </div>
+            </div>
+            <div style="margin-top: 50px; text-align: center; font-size: 1.3em; color: #555;">
+                Augmentation applied only to <span class="highlight">training set</span>
+            </div>
+        </div>
+
+        <!-- Slide 9: Evaluation Metrics -->
+        <div class="slide">
+            <h2>Evaluation Metrics</h2>
+            <div class="three-column" style="margin-top: 40px;">
+                <div class="metric-box">
+                    <div class="metric-value">IoU</div>
+                    <div class="metric-label">Intersection over Union</div>
+                    <p style="margin-top: 15px; font-size: 0.9em;">
+                        IoU = Intersection / Union
+                    </p>
+                </div>
+                <div class="metric-box">
+                    <div class="metric-value">Dice</div>
+                    <div class="metric-label">Dice Coefficient</div>
+                    <p style="margin-top: 15px; font-size: 0.9em;">
+                        Dice = 2×Intersection / (Pred + Truth)
+                    </p>
+                </div>
+                <div class="metric-box">
+                    <div class="metric-value">Acc</div>
+                    <div class="metric-label">Pixel Accuracy</div>
+                    <p style="margin-top: 15px; font-size: 0.9em;">
+                        Correct Pixels / Total Pixels
+                    </p>
+                </div>
+            </div>
+        </div>
+
+        <!-- Slide 10: Model Output -->
+        <div class="slide">
+            <h2>Model Output</h2>
+            <div style="margin-top: 40px;">
+                <div class="two-column">
+                    <div class="card">
+                        <h3>Probability Map</h3>
+                        <p style="font-size: 1.2em; margin-top: 20px;">
+                            Each pixel value: <span class="highlight">0.0 - 1.0</span>
+                        </p>
+                        <ul style="text-align: left; margin-top: 30px;">
+                            <li>1.0 = High landslide probability</li>
+                            <li>0.5 = Medium probability</li>
+                            <li>0.0 = Low probability</li>
+                        </ul>
+                    </div>
+                    <div class="card">
+                        <h3>Binary Mask</h3>
+                        <p style="font-size: 1.2em; margin-top: 20px;">
+                            Threshold at <span class="highlight">0.5</span>
+                        </p>
+                        <ul style="text-align: left; margin-top: 30px;">
+                            <li>Probability > 0.5 → Landslide</li>
+                            <li>Probability ≤ 0.5 → No landslide</li>
+                        </ul>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <!-- Slide 11: Technology Stack -->
+        <div class="slide">
+            <h2>Technology Stack</h2>
+            <div class="three-column" style="margin-top: 40px;">
+                <div class="card">
+                    <h3>PyTorch</h3>
+                    <p>Deep Learning Framework</p>
+                </div>
+                <div class="card">
+                    <h3>Python</h3>
+                    <p>Programming Language</p>
+                </div>
+                <div class="card">
+                    <h3>NumPy</h3>
+                    <p>Numerical Computing</p>
+                </div>
+            </div>
+            <div class="three-column" style="margin-top: 30px;">
+                <div class="card">
+                    <h3>PIL/Pillow</h3>
+                    <p>Image Processing</p>
+                </div>
+                <div class="card">
+                    <h3>Matplotlib</h3>
+                    <p>Visualization</p>
+                </div>
+                <div class="card">
+                    <h3>CUDA</h3>
+                    <p>GPU Acceleration</p>
+                </div>
+            </div>
+        </div>
+
+        <!-- Slide 12: Results Visualization -->
+        <div class="slide">
+            <h2>Results Visualization</h2>
+            <div style="margin-top: 40px;">
+                <div class="three-column">
+                    <div class="image-placeholder" style="height: 250px;">
+                        Input Image
+                    </div>
+                    <div class="image-placeholder" style="height: 250px;">
+                        Ground Truth
+                    </div>
+                    <div class="image-placeholder" style="height: 250px;">
+                        Probability Map
+                    </div>
+                </div>
+                <div style="text-align: center; margin-top: 40px; font-size: 1.3em; color: #667eea;">
+                    Model generates heat map showing landslide probability for each pixel
+                </div>
+            </div>
+        </div>
+
+        <!-- Slide 13: Key Features -->
+        <div class="slide">
+            <h2>Key Features</h2>
+            <div class="two-column" style="margin-top: 40px;">
+                <div>
+                    <ul style="font-size: 1.5em;">
+                        <li>Automated Detection</li>
+                        <li>Probability Maps</li>
+                        <li>Real-time Processing</li>
+                        <li>High Accuracy</li>
+                    </ul>
+                </div>
+                <div>
+                    <ul style="font-size: 1.5em;">
+                        <li>Scalable Architecture</li>
+                        <li>GPU Accelerated</li>
+                        <li>Batch Processing</li>
+                        <li>Visualization Tools</li>
+                    </ul>
+                </div>
+            </div>
+        </div>
+
+        <!-- Slide 14: Applications -->
+        <div class="slide">
+            <h2>Real-World Applications</h2>
+            <div class="three-column" style="margin-top: 40px;">
+                <div class="card">
+                    <h3>Disaster Management</h3>
+                    <p>Early warning systems</p>
+                </div>
+                <div class="card">
+                    <h3>Infrastructure Planning</h3>
+                    <p>Risk assessment</p>
+                </div>
+                <div class="card">
+                    <h3>Environmental Monitoring</h3>
+                    <p>Land use analysis</p>
+                </div>
+            </div>
+        </div>
+
+        <!-- Slide 15: Conclusion -->
+        <div class="slide">
+            <h1>Thank You!</h1>
+            <div style="margin-top: 60px; font-size: 1.8em; color: #667eea;">
+                Landslide Detection using Deep Learning
+            </div>
+            <div style="margin-top: 40px; font-size: 1.4em; color: #7f8c8d;">
+                IB Computer Science Project
+            </div>
+        </div>
+
+    </div>
+
+    <div class="slide-counter">
+        <span id="current-slide">1</span> / <span id="total-slides">15</span>
+    </div>
+
+    <div class="navigation">
+        <button class="nav-btn" onclick="previousSlide()">◀ Previous</button>
+        <button class="nav-btn" onclick="nextSlide()">Next ▶</button>
+    </div>
+
+    <script>
+        let currentSlide = 0;
+        const slides = document.querySelectorAll('.slide');
+        const totalSlides = slides.length;
+        document.getElementById('total-slides').textContent = totalSlides;
+
+        function showSlide(n) {
+            slides[currentSlide].classList.remove('active');
+            currentSlide = (n + totalSlides) % totalSlides;
+            slides[currentSlide].classList.add('active');
+            document.getElementById('current-slide').textContent = currentSlide + 1;
+        }
+
+        function nextSlide() {
+            showSlide(currentSlide + 1);
+        }
+
+        function previousSlide() {
+            showSlide(currentSlide - 1);
+        }
+
+        // Keyboard navigation
+        document.addEventListener('keydown', (e) => {
+            if (e.key === 'ArrowRight' || e.key === ' ') {
+                nextSlide();
+            } else if (e.key === 'ArrowLeft') {
+                previousSlide();
+            }
+        });
+
+        // Touch swipe support
+        let touchStartX = 0;
+        let touchEndX = 0;
+
+        document.addEventListener('touchstart', (e) => {
+            touchStartX = e.changedTouches[0].screenX;
+        });
+
+        document.addEventListener('touchend', (e) => {
+            touchEndX = e.changedTouches[0].screenX;
+            handleSwipe();
+        });
+
+        function handleSwipe() {
+            if (touchEndX < touchStartX - 50) {
+                nextSlide();
+            }
+            if (touchEndX > touchStartX + 50) {
+                previousSlide();
+            }
+        }
+    </script>
+</body>
+</html>
+
