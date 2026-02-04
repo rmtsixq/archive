@@ -1,29 +1,25 @@
 from flask import Flask, request, render_template, jsonify
-import torch
 import numpy as np
 from PIL import Image
 import io
 import base64
-from model import get_model
 import os
 
 app = Flask(__name__)
 
+import onnxruntime as ort
+
 # Load model
-device = torch.device('cuda' if torch.cuda.is_available() else 'cpu')
-model = None
+model_session = None
 
 def load_model():
-    global model
-    checkpoint_path = 'checkpoints/best_model.pth'
-    if os.path.exists(checkpoint_path):
-        model = get_model(device)
-        checkpoint = torch.load(checkpoint_path, map_location=device)
-        model.load_state_dict(checkpoint['model_state_dict'])
-        model.eval()
-        print(f'Model loaded from {checkpoint_path}')
+    global model_session
+    model_path = 'model.onnx'
+    if os.path.exists(model_path):
+        model_session = ort.InferenceSession(model_path)
+        print(f'Model loaded from {model_path}')
     else:
-        print(f'Warning: Checkpoint not found at {checkpoint_path}')
+        print(f'Warning: Model not found at {model_path}')
 
 @app.route('/')
 def index():
@@ -31,7 +27,7 @@ def index():
 
 @app.route('/predict', methods=['POST'])
 def predict():
-    if model is None:
+    if model_session is None:
         return jsonify({'error': 'Model not loaded'}), 500
     
     if 'image' not in request.files:
@@ -46,17 +42,22 @@ def predict():
         image = Image.open(file.stream).convert('RGB')
         original_size = image.size
         
-        # Resize to model input size
+        # Resize to model input size (128x128) matches export script
         image_resized = image.resize((128, 128), Image.BILINEAR)
         
-        # Convert to tensor
+        # Convert to numpy array and normalize
         image_array = np.array(image_resized).astype(np.float32) / 255.0
-        image_tensor = torch.from_numpy(image_array).permute(2, 0, 1).unsqueeze(0).to(device)
         
-        # Predict
-        with torch.no_grad():
-            output = model(image_tensor)
-            probability_map = output[0].cpu().squeeze().numpy()
+        # Transpose to (C, H, W) and add batch dimension -> (1, 3, 128, 128)
+        input_tensor = np.transpose(image_array, (2, 0, 1))
+        input_tensor = np.expand_dims(input_tensor, axis=0)
+        
+        # Predict using ONNX Runtime
+        input_name = model_session.get_inputs()[0].name
+        output_name = model_session.get_outputs()[0].name
+        
+        outputs = model_session.run([output_name], {input_name: input_tensor})
+        probability_map = outputs[0][0, 0] # Remove batch and channel dims
         
         # Resize back to original size
         prob_img = Image.fromarray((probability_map * 255).astype(np.uint8), mode='L')
