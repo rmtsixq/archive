@@ -14,12 +14,21 @@ model_session = None
 
 def load_model():
     global model_session
-    model_path = 'model.onnx'
+    # Get absolute path to model file
+    base_dir = os.path.dirname(os.path.abspath(__file__))
+    model_path = os.path.join(base_dir, 'model.onnx')
+    
     if os.path.exists(model_path):
-        model_session = ort.InferenceSession(model_path)
-        print(f'Model loaded from {model_path}')
+        try:
+            model_session = ort.InferenceSession(model_path)
+            print(f'Model loaded from {model_path}')
+        except Exception as e:
+            print(f'Error loading model: {e}')
     else:
         print(f'Warning: Model not found at {model_path}')
+
+# Load model immediately on module import
+load_model()
 
 @app.route('/')
 def index():
@@ -118,7 +127,7 @@ def predict():
         return jsonify({'error': str(e)}), 500
 
 if __name__ == '__main__':
-    load_model()
+    # load_model() is already called at the top level
     print('Starting web server...')
     print('Open http://localhost:5000 in your browser')
     port = int(os.environ.get('PORT', 5000))
