@@ -52,10 +52,17 @@
         function displayResults(result) {
             const outputDiv = document.getElementById('output');
             outputDiv.innerHTML = `
-                <h3>Landslide Probability: ${(result.probability * 100).toFixed(2)}%</h3>
-                <p>Max Probability: ${(result.max_prob * 100).toFixed(2)}%</p>
-                <p>Mean Probability: ${(result.mean_prob * 100).toFixed(2)}%</p>
-                <p>Landslide Area: ${result.landslide_percentage.toFixed(2)}%</p>
+                <h3>Landslide Probability (Ortalama): ${(result.probability * 100).toFixed(2)}%</h3>
+                <p><strong>Max Olasılık:</strong> ${(result.max_prob * 100).toFixed(2)}%</p>
+                <p><strong>Min Olasılık:</strong> ${(result.min_prob * 100).toFixed(2)}%</p>
+                <p><strong>Standart Sapma:</strong> ${(result.std_prob * 100).toFixed(2)}%</p>
+                <p><strong>Medyan Olasılık:</strong> ${(result.median_prob * 100).toFixed(2)}%</p>
+                <p><strong>1. Çeyrek (Q1):</strong> ${(result.q25_prob * 100).toFixed(2)}%</p>
+                <p><strong>3. Çeyrek (Q3):</strong> ${(result.q75_prob * 100).toFixed(2)}%</p>
+                <p><strong>Heyelan Alanı (>0.5 eşik):</strong> ${result.landslide_percentage.toFixed(2)}%</p>
+                <p><strong>Yüksek Risk Alanı (>0.7):</strong> ${result.high_risk_percentage_70.toFixed(2)}%</p>
+                <p><strong>Çok Yüksek Risk Alanı (>0.9):</strong> ${result.high_risk_percentage_90.toFixed(2)}%</p>
+                <p><strong>Genel Risk Düzeyi:</strong> ${result.risk_level}</p>
                 <img src="data:image/png;base64,${result.probability_map}" alt="Probability Map" style="max-width: 500px; margin-top: 10px;">
             `;
         }
