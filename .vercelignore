@@ -1,0 +1,18 @@
+# Ignore the checkpoints folder (saves ~93MB)
+checkpoints/
+*.pth
+
+# Ignore git folder
+.git/
+
+# Ignore cache
+__pycache__/
+*.pyc
+
+# Ignore export script
+export_onnx.py
+
+# Ignore other potential heavy files not needed for runtime
+presentation.html
+.gitignore
+README.md
